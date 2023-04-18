@@ -2,7 +2,7 @@
 
 resource "azurerm_resource_group" "network_rg" {
   name     = "eso-network-rg"
-  location =  var.azure_region
+  location = var.azure_region
 }
 
 resource "azurerm_virtual_network" "aks_nw" {
@@ -27,39 +27,34 @@ resource "azurerm_virtual_network" "aks_nw" {
 }
 
 
-###############
-## Disabled the Private Endpoint beause the certificate 
-## is not correct for the private endpoint address
-###############
+resource "azurerm_private_dns_zone" "kv_zone" {
+  name                = "privatelink.vaultcore.azure.net"
+  resource_group_name = azurerm_resource_group.network_rg.name
+}
 
-# resource "azurerm_private_dns_zone" "kv_zone" {
-#   name                = "privatelink.vaultcore.azure.net"
-#   resource_group_name = azurerm_resource_group.network_rg.name
-# }
+resource "azurerm_private_endpoint" "pe_kv" {
+  name                = "pe-kv"
+  location            = azurerm_resource_group.network_rg.location
+  resource_group_name = azurerm_resource_group.network_rg.name
+  subnet_id           = data.azurerm_subnet.sn2.id
 
-# resource "azurerm_private_endpoint" "pe_kv" {
-#   name                = "pe-kv"
-#   location            = azurerm_resource_group.network_rg.location
-#   resource_group_name = azurerm_resource_group.network_rg.name
-#   subnet_id           = data.azurerm_subnet.sn2.id
+  private_dns_zone_group {
+    name                 = "privatednszonegroup"
+    private_dns_zone_ids = [azurerm_private_dns_zone.kv_zone.id]
+  }
 
-#   private_dns_zone_group {
-#     name                 = "privatednszonegroup"
-#     private_dns_zone_ids = [azurerm_private_dns_zone.kv_zone.id]
-#   }
+  private_service_connection {
+    name                           = format("pse-2%s", "eso-keyvault")
+    private_connection_resource_id = azurerm_key_vault.eso-keyvault.id
+    is_manual_connection           = false
+    subresource_names              = ["Vault"]
+  }
+}
 
-#   private_service_connection {
-#     name                           = format("pse-2%s", "eso-keyvault")
-#     private_connection_resource_id = azurerm_key_vault.eso-keyvault.id
-#     is_manual_connection           = false
-#     subresource_names              = ["Vault"]
-#   }
-# }
-
-# resource "azurerm_private_dns_zone_virtual_network_link" "kv_vn_link" {
-#   name                  = "kv-vn-link"
-#   resource_group_name   = azurerm_resource_group.network_rg.name
-#   virtual_network_id    = azurerm_virtual_network.aks_nw.id
-#   private_dns_zone_name = azurerm_private_dns_zone.kv_zone.name
-#   registration_enabled  = true
-# }
+resource "azurerm_private_dns_zone_virtual_network_link" "kv_vn_link" {
+  name                  = "kv-vn-link"
+  resource_group_name   = azurerm_resource_group.network_rg.name
+  virtual_network_id    = azurerm_virtual_network.aks_nw.id
+  private_dns_zone_name = azurerm_private_dns_zone.kv_zone.name
+  registration_enabled  = true
+}

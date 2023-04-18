@@ -13,7 +13,7 @@ resource "azuread_service_principal" "eso_sp" {
 # Create a short lived password for the service principal
 resource "azuread_service_principal_password" "auth" {
   service_principal_id = azuread_service_principal.eso_sp.id
-  end_date_relative    = "8h"
+  end_date_relative    = "10h"
 }
 
 # Give the SP read on the Subscription
