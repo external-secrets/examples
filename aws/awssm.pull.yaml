@@ -1,0 +1,65 @@
+apiVersion: external-secrets.io/v1beta1
+kind: SecretStore
+metadata:
+  name: aws-secrets-manager
+spec:
+  provider:
+    aws:
+      service: SecretsManager
+      region: eu-central-1
+      auth:
+        jwt:
+          serviceAccountRef:
+            name: "kubecon-demo"
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: simple-user-pass
+spec:
+  refreshInterval: 1m
+  secretStoreRef:
+    name: aws-secrets-manager
+    kind: SecretStore
+  target:
+    name: simple-user-pass
+  data:
+  - secretKey: my-password
+    remoteRef:
+      key: my-password
+  - secretKey: my-username
+    remoteRef:
+      key: my-username
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: json-credentials
+spec:
+  refreshInterval: 1m
+  secretStoreRef:
+    name: aws-secrets-manager
+    kind: SecretStore
+  target:
+    name: json-credentials
+  dataFrom:
+  - extract:
+      key: my-json-credential
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: db-connectionstring
+spec:
+  refreshInterval: 1m
+  secretStoreRef:
+    name: aws-secrets-manager
+    kind: SecretStore
+  target:
+    name: db-connectionstring
+    template:
+      data:
+        myconnectionstring: "mysql://{{ .user }}:{{ .password }}@{{ .host }}:{{ .port }}"
+  dataFrom:
+  - extract:
+      key: my-json-credential
