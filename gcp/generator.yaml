@@ -1,0 +1,32 @@
+apiVersion: generators.external-secrets.io/v1alpha1
+kind: GCRAccessToken
+metadata:
+  name: gcr-gen
+  namespace: default
+spec:
+  auth:
+    workloadIdentity:
+      serviceAccountRef:
+        name: "external-secrets-write"
+        namespace: default
+      clusterLocation: us-central1-c
+      clusterName: cluster-1
+      clusterProjectID: amiable-nirvana-263914
+  projectID: amiable-nirvana-263914
+
+---
+
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: "gcr-token"
+spec:
+  refreshInterval: "30m"
+  target:
+    name: gcr-token
+  dataFrom:
+  - sourceRef:
+      generatorRef:
+        apiVersion: generators.external-secrets.io/v1alpha1
+        kind: GCRAccessToken
+        name: "gcr-gen"

@@ -1,0 +1,20 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: dk-cfg-example
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: gcp-store
+  target:
+    template:
+      type: kubernetes.io/dockerconfigjson
+      data:
+        .dockerconfigjson: "{{ .mysecret | toString }}"
+    name: docker-config-json-pull-secret-in-cluster
+    creationPolicy: Owner
+  data:
+  - secretKey: mysecret
+    remoteRef:
+      key: docker-config-example
