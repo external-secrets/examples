@@ -1,0 +1,39 @@
+apiVersion: external-secrets.io/v1beta1
+kind: ClusterSecretStore
+metadata:
+  name: fake-template-01
+spec:
+  provider:
+    fake:
+      data:
+      - key: "backend"
+        value: "$$$backend$$$"
+      - key: "frontend"
+        value: "$$$frontend$$$"
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: fake-template-01
+spec:
+  refreshInterval: "10s"
+  secretStoreRef:
+    name: fake-template-01
+    kind: ClusterSecretStore
+  target:
+    name: "fake-template-01"
+    template:
+      engineVersion: v2
+      templateFrom:
+      - target: Data
+        literal: |
+          {{ range $key, $value := . }}
+          custom-prefix-{{$key}}: ${{$value}}
+          {{ end }}
+  data:
+  - secretKey: backend
+    remoteRef:
+      key: backend
+  - secretKey: frontend
+    remoteRef:
+      key: frontend
