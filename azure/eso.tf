@@ -5,7 +5,7 @@ resource "helm_release" "eso" {
   name             = "eso-operator"
   repository       = "https://charts.external-secrets.io"
   chart            = "external-secrets"
-  version          = "0.8.1"
+  version          = var.chart_version
   namespace        = "external-secrets"
   create_namespace = true
 
